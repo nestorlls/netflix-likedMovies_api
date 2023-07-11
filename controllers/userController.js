@@ -48,4 +48,41 @@ const getMyListMovies = async (req, res) => {
   }
 };
 
-module.exports = { addMovieToMyList, getMyListMovies };
+const deleteMovieFromMyList = async (req, res) => {
+  try {
+    const { email, movieId } = req.body;
+
+    const user = await User.findOne({ email });
+
+    if (user) {
+      const { myList } = user;
+      const index = myList.findIndex(({ id }) => +id === +movieId);
+
+      if (index !== -1) {
+        const myNewList = [
+          ...myList.slice(0, index),
+          ...myList.slice(index + 1),
+        ];
+        await User.findByIdAndUpdate(user._id, {
+          myList: myNewList,
+        });
+
+        return res.json({
+          message: 'Movie removed from your list',
+          movies: myNewList,
+        });
+      } else {
+        return res.json({
+          message: 'Movie is not in your list',
+          movies: myList,
+        });
+      }
+    } else {
+      return res.json({ message: 'User with this email does not exist' });
+    }
+  } catch (error) {
+    return res.json({ message: error.message });
+  }
+};
+
+module.exports = { addMovieToMyList, getMyListMovies, deleteMovieFromMyList };
